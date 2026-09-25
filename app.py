@@ -2582,23 +2582,17 @@ if df is not None and not df.empty:
 
             if remaining == 0:
 
-                css_class = "danger-card"
-
                 icon = "🔴"
 
                 title = "Deadline Today"
 
             elif remaining == 1:
 
-                css_class = "danger-card"
-
                 icon = "🔴"
 
                 title = "1 Day Remaining"
 
             elif remaining <= 3:
-
-                css_class = "alert-card"
 
                 icon = "🟠"
 
@@ -2608,50 +2602,39 @@ if df is not None and not df.empty:
 
             else:
 
-                css_class = "success-card"
-
                 icon = "🟢"
 
                 title = "Upcoming"
 
-            st.markdown(
-                f"""
-                <div class="{css_class}">
-                    <h4>
-                        {icon}
-                        {alert['Hackathon Name']}
-                    </h4>
+            # ------------------------------------------------
+            # NATIVE STREAMLIT DEADLINE CARD
+            # ------------------------------------------------
 
-                    <p>
-                        <strong>
-                            {title}
-                        </strong>
-                    </p>
+            with st.container(border=True):
 
-                    <p>
-                        📅 Last Date:
-                        <strong>
-                            {alert['Last Date']}
-                        </strong>
-                    </p>
+                st.subheader(
+                    f"{icon} {alert['Hackathon Name']}"
+                )
 
-                    <p>
-                        ⏳ Days Remaining:
-                        <strong>
-                            {remaining}
-                        </strong>
-                    </p>
+                st.markdown(
+                    f"**{title}**"
+                )
 
-                    <p>
-                        📌 Status:
-                        <strong>
-                            {alert['Status']}
-                        </strong>
-                    </p>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+                st.write(
+                    f"📅 **Last Date:** {alert['Last Date']}"
+                )
+
+                st.write(
+                    f"⏳ **Days Remaining:** {remaining}"
+                )
+
+                st.write(
+                    f"📌 **Status:** {alert['Status']}"
+                )
+
+            # ------------------------------------------------
+            # WHATSAPP + EMAIL BUTTONS
+            # ------------------------------------------------
 
             col_a, col_b = st.columns(2)
 
@@ -2690,16 +2673,10 @@ if df is not None and not df.empty:
 
     else:
 
-        st.markdown(
-            """
-            <div class="success-card">
-                <strong>✅ No urgent deadline alerts.</strong>
-                <br>
-                There are currently no hackathons
-                with deadlines within the next 3 days.
-            </div>
-            """,
-            unsafe_allow_html=True
+        st.success(
+            "✅ No urgent deadline alerts. "
+            "There are currently no hackathons "
+            "with deadlines within the next 3 days."
         )
 
 
@@ -3157,39 +3134,30 @@ if st.button(
                 test_alerts
             ):
 
-                st.markdown(
-                    f"""
-                    <div class="alert-card">
+                # ------------------------------------------------
+                # NATIVE STREAMLIT TEST ALERT CARD
+                # ------------------------------------------------
 
-                    <h4>
-                        🚨 {alert['Hackathon Name']}
-                    </h4>
+                with st.container(border=True):
 
-                    <p>
-                        Last Date:
-                        <strong>
-                            {alert['Last Date']}
-                        </strong>
-                    </p>
+                    st.subheader(
+                        f"🚨 {alert['Hackathon Name']}"
+                    )
 
-                    <p>
-                        Days Remaining:
-                        <strong>
-                            {alert['Days Remaining']}
-                        </strong>
-                    </p>
+                    st.write(
+                        f"📅 **Last Date:** "
+                        f"{alert['Last Date']}"
+                    )
 
-                    <p>
-                        Status:
-                        <strong>
-                            {alert['Status']}
-                        </strong>
-                    </p>
+                    st.write(
+                        f"⏳ **Days Remaining:** "
+                        f"{alert['Days Remaining']}"
+                    )
 
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+                    st.write(
+                        f"📌 **Status:** "
+                        f"{alert['Status']}"
+                    )
 
                 test_col1, test_col2 = st.columns(2)
 
