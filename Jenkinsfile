@@ -3,15 +3,9 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t hackton-app:latest .'
+                sh 'docker build --no-cache -t hackton-app:latest .'
             }
         }
 
