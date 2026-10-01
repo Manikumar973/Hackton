@@ -152,6 +152,7 @@ for key, default in [
 
 def clean_text(text):
     """Clean OCR text."""
+
     if not text:
         return ""
 
@@ -162,9 +163,9 @@ def clean_text(text):
     return text.strip()
 
 
-# ------------------------------------------------------------
+# ============================================================
 # DEADLINE PARSER
-# ------------------------------------------------------------
+# ============================================================
 
 def parse_deadline(text):
     """
@@ -201,19 +202,29 @@ def parse_deadline(text):
         r"(\d{1,2})[/\-](\d{1,2})[/\-](\d{2,4})",
     ]
 
-    for pattern_index, pat in enumerate(patterns):
+    for pattern_index, pattern in enumerate(patterns):
 
-        for match in re.finditer(pat, text, re.IGNORECASE):
+        for match in re.finditer(
+            pattern,
+            text,
+            re.IGNORECASE,
+        ):
 
             groups = match.groups()
 
             try:
 
-                # Example: 25 September 2026
+                # --------------------------------------------
+                # 25 September 2026
+                # --------------------------------------------
+
                 if pattern_index == 0:
 
                     day = int(groups[0])
-                    month = months.get(groups[1].lower()[:3])
+
+                    month = months.get(
+                        groups[1].lower()[:3]
+                    )
 
                     year = (
                         int(groups[2])
@@ -224,9 +235,16 @@ def parse_deadline(text):
                     if month is None:
                         continue
 
-                    return date(year, month, day)
+                    return date(
+                        year,
+                        month,
+                        day,
+                    )
 
-                # Example: 2026-09-25
+                # --------------------------------------------
+                # 2026-09-25
+                # --------------------------------------------
+
                 elif pattern_index == 1:
 
                     return date(
@@ -235,7 +253,10 @@ def parse_deadline(text):
                         int(groups[2]),
                     )
 
-                # Example: 25/09/2026
+                # --------------------------------------------
+                # 25/09/2026
+                # --------------------------------------------
+
                 else:
 
                     first = int(groups[0])
@@ -249,7 +270,11 @@ def parse_deadline(text):
                     if 1 <= second <= 12 and 1 <= first <= 31:
 
                         try:
-                            return date(year, second, first)
+                            return date(
+                                year,
+                                second,
+                                first,
+                            )
                         except ValueError:
                             pass
 
@@ -257,7 +282,11 @@ def parse_deadline(text):
                     if 1 <= first <= 12 and 1 <= second <= 31:
 
                         try:
-                            return date(year, first, second)
+                            return date(
+                                year,
+                                first,
+                                second,
+                            )
                         except ValueError:
                             pass
 
@@ -267,9 +296,9 @@ def parse_deadline(text):
     return None
 
 
-# ------------------------------------------------------------
+# ============================================================
 # QR EXTRACTION
-# ------------------------------------------------------------
+# ============================================================
 
 def extract_qr_codes(image_bytes):
     """
@@ -282,11 +311,16 @@ def extract_qr_codes(image_bytes):
         return codes
 
     try:
-        img = Image.open(BytesIO(image_bytes))
+        img = Image.open(
+            BytesIO(image_bytes)
+        )
     except Exception:
         return codes
 
+    # --------------------------------------------------------
     # First method: pyzbar
+    # --------------------------------------------------------
+
     if PYZBAR_OK:
 
         try:
@@ -297,7 +331,7 @@ def extract_qr_codes(image_bytes):
 
                 data = item.data.decode(
                     "utf-8",
-                    errors="ignore"
+                    errors="ignore",
                 ).strip()
 
                 if data and data not in codes:
@@ -306,21 +340,28 @@ def extract_qr_codes(image_bytes):
         except Exception:
             pass
 
+    # --------------------------------------------------------
     # Second method: OpenCV
+    # --------------------------------------------------------
+
     if not codes and CV2_OK:
 
         try:
 
-            arr = np.array(img.convert("RGB"))
+            arr = np.array(
+                img.convert("RGB")
+            )
 
             arr = cv2.cvtColor(
                 arr,
-                cv2.COLOR_RGB2BGR
+                cv2.COLOR_RGB2BGR,
             )
 
             detector = cv2.QRCodeDetector()
 
-            data, _, _ = detector.detectAndDecode(arr)
+            data, _, _ = detector.detectAndDecode(
+                arr
+            )
 
             if data:
 
@@ -335,9 +376,9 @@ def extract_qr_codes(image_bytes):
     return codes
 
 
-# ------------------------------------------------------------
+# ============================================================
 # OCR
-# ------------------------------------------------------------
+# ============================================================
 
 def extract_ocr(image_bytes):
     """
@@ -357,7 +398,7 @@ def extract_ocr(image_bytes):
 
         arr = cv2.cvtColor(
             arr,
-            cv2.COLOR_RGB2BGR
+            cv2.COLOR_RGB2BGR,
         )
 
         # Resize image
@@ -371,14 +412,14 @@ def extract_ocr(image_bytes):
 
         gray = cv2.cvtColor(
             arr,
-            cv2.COLOR_BGR2GRAY
+            cv2.COLOR_BGR2GRAY,
         )
 
         # Slight denoise
         gray = cv2.GaussianBlur(
             gray,
             (3, 3),
-            0
+            0,
         )
 
         # Threshold
@@ -391,12 +432,15 @@ def extract_ocr(image_bytes):
 
         texts = []
 
+        # ----------------------------------------------------
         # OCR original grayscale
+        # ----------------------------------------------------
+
         try:
 
             text1 = pytesseract.image_to_string(
                 gray,
-                config="--psm 6"
+                config="--psm 6",
             )
 
             if text1:
@@ -405,12 +449,15 @@ def extract_ocr(image_bytes):
         except Exception:
             pass
 
+        # ----------------------------------------------------
         # OCR threshold image
+        # ----------------------------------------------------
+
         try:
 
             text2 = pytesseract.image_to_string(
                 threshold,
-                config="--psm 6"
+                config="--psm 6",
             )
 
             if text2:
@@ -419,12 +466,15 @@ def extract_ocr(image_bytes):
         except Exception:
             pass
 
+        # ----------------------------------------------------
         # OCR sparse text
+        # ----------------------------------------------------
+
         try:
 
             text3 = pytesseract.image_to_string(
                 threshold,
-                config="--psm 11"
+                config="--psm 11",
             )
 
             if text3:
@@ -442,9 +492,9 @@ def extract_ocr(image_bytes):
         return ""
 
 
-# ------------------------------------------------------------
+# ============================================================
 # URL CLEANING
-# ------------------------------------------------------------
+# ============================================================
 
 def clean_url(url):
     """
@@ -456,7 +506,9 @@ def clean_url(url):
 
     url = str(url).strip()
 
-    url = url.rstrip(".,;:)]}>\"'")
+    url = url.rstrip(
+        ".,;:)]}>\"'"
+    )
 
     # Add https if www.
     if url.startswith("www."):
@@ -465,9 +517,9 @@ def clean_url(url):
     return url
 
 
-# ------------------------------------------------------------
+# ============================================================
 # FIND APPLICATION URL
-# ------------------------------------------------------------
+# ============================================================
 
 def extract_application_link(text, qr_codes):
     """
@@ -500,15 +552,14 @@ def extract_application_link(text, qr_codes):
         if qr_clean.startswith(
             ("http://", "https://")
         ):
-
             return qr_clean
 
     return ""
 
 
-# ------------------------------------------------------------
+# ============================================================
 # HACKATHON NAME EXTRACTION
-# ------------------------------------------------------------
+# ============================================================
 
 def extract_hackathon_name(text, source_name):
     """
@@ -517,12 +568,15 @@ def extract_hackathon_name(text, source_name):
     """
 
     lines = [
-        re.sub(r"\s+", " ", line).strip()
+        re.sub(
+            r"\s+",
+            " ",
+            line,
+        ).strip()
         for line in text.splitlines()
         if line.strip()
     ]
 
-    # Remove obvious non-name lines
     ignored_words = [
         "register",
         "registration",
@@ -564,7 +618,6 @@ def extract_hackathon_name(text, source_name):
             ).strip()
 
             if len(cleaned) >= 4:
-
                 return cleaned.upper()
 
     # --------------------------------------------------------
@@ -584,10 +637,12 @@ def extract_hackathon_name(text, source_name):
         if len(line) > 100:
             continue
 
-        if any(word in lower for word in ignored_words):
+        if any(
+            word in lower
+            for word in ignored_words
+        ):
             continue
 
-        # Skip mostly numbers
         alpha_count = sum(
             char.isalpha()
             for char in line
@@ -598,10 +653,7 @@ def extract_hackathon_name(text, source_name):
 
         candidates.append(line)
 
-    # Prefer first reasonable title
     if candidates:
-
-        # First candidate is usually poster heading
         return candidates[0].upper()
 
     # --------------------------------------------------------
@@ -629,18 +681,18 @@ def extract_hackathon_name(text, source_name):
     if filename:
         return filename.upper()
 
-    # --------------------------------------------------------
-    # FINAL FALLBACK
-    # --------------------------------------------------------
-
     return "HACKATHON"
 
 
-# ------------------------------------------------------------
+# ============================================================
 # PARSE POSTER
-# ------------------------------------------------------------
+# ============================================================
 
-def parse_poster(text, qr_codes, source_name):
+def parse_poster(
+    text,
+    qr_codes,
+    source_name,
+):
 
     text = clean_text(text)
 
@@ -665,7 +717,6 @@ def parse_poster(text, qr_codes, source_name):
 
             theme = line
 
-            # Remove Theme:
             theme = re.sub(
                 r"^\s*theme\s*[:\-]?\s*",
                 "",
@@ -692,8 +743,7 @@ def parse_poster(text, qr_codes, source_name):
 
     if qr_codes:
 
-        # If QR contains URL, keep URL directly
-        # so Streamlit can make it clickable.
+        # Prefer QR URL
         for qr in qr_codes:
 
             cleaned_qr = clean_url(qr)
@@ -705,7 +755,7 @@ def parse_poster(text, qr_codes, source_name):
                 qr_value = cleaned_qr
                 break
 
-        # If no URL, keep first QR text
+        # Otherwise keep first QR text
         if not qr_value:
             qr_value = qr_codes[0]
 
@@ -725,9 +775,9 @@ def parse_poster(text, qr_codes, source_name):
     }
 
 
-# ------------------------------------------------------------
+# ============================================================
 # DEADLINE ALERT CHECK
-# ------------------------------------------------------------
+# ============================================================
 
 def check_deadline_alerts(
     df,
@@ -767,9 +817,9 @@ def check_deadline_alerts(
     return alerts
 
 
-# ------------------------------------------------------------
+# ============================================================
 # SEND EMAIL
-# ------------------------------------------------------------
+# ============================================================
 
 def send_email(
     sender,
@@ -838,7 +888,6 @@ st.markdown(
     '<div class="section-title">📤 Upload Posters</div>',
     unsafe_allow_html=True,
 )
-
 
 uploaded_files = st.file_uploader(
     "Choose one or more hackathon poster images",
@@ -919,6 +968,8 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+edited = pd.DataFrame()
+
 
 if st.session_state.results:
 
@@ -944,13 +995,14 @@ if st.session_state.results:
 
     # Internal deadline column
     if "_deadline_date" not in df.columns:
+
         df["_deadline_date"] = [
             parse_deadline(value)
             for value in df["Deadline"]
         ]
 
     # --------------------------------------------------------
-    # Force hackathon names to uppercase
+    # Force hackathon names uppercase
     # --------------------------------------------------------
 
     df["Hackathon Name"] = (
@@ -982,12 +1034,14 @@ if st.session_state.results:
     # --------------------------------------------------------
     # Editable table
     #
-    # num_rows="dynamic" allows user to delete rows.
+    # IMPORTANT:
+    # width is an integer for compatibility with
+    # older Streamlit versions.
     # --------------------------------------------------------
 
     edited = st.data_editor(
         display_df,
-        width="stretch",
+        width=1000,
         height=450,
         key="edited_table",
         num_rows="dynamic",
@@ -1066,9 +1120,6 @@ if st.session_state.results:
 
     # --------------------------------------------------------
     # SAVE TABLE CHANGES BACK TO SESSION
-    #
-    # This also means deleted rows stay deleted
-    # during the current session.
     # --------------------------------------------------------
 
     st.session_state.results = (
@@ -1076,7 +1127,7 @@ if st.session_state.results:
     )
 
     # --------------------------------------------------------
-    # SHOW HACKATHON NAMES IN LARGE LETTERS
+    # SHOW HACKATHON NAMES
     # --------------------------------------------------------
 
     st.markdown(
@@ -1088,7 +1139,7 @@ if st.session_state.results:
         hackathon_name = str(
             row.get(
                 "Hackathon Name",
-                ""
+                "",
             )
         ).strip()
 
@@ -1108,8 +1159,6 @@ else:
     st.info(
         "Upload posters above to see extracted data here."
     )
-
-    edited = pd.DataFrame()
 
 
 # ============================================================
@@ -1140,7 +1189,10 @@ if edited is not None and not edited.empty:
             out_df.columns
         )
 
+        # ----------------------------------------------------
         # Header style
+        # ----------------------------------------------------
+
         header_fill = PatternFill(
             start_color="1E3A8A",
             end_color="1E3A8A",
@@ -1170,7 +1222,10 @@ if edited is not None and not edited.empty:
                 horizontal="center"
             )
 
+        # ----------------------------------------------------
         # Data
+        # ----------------------------------------------------
+
         for row_index, row in enumerate(
             out_df.itertuples(index=False),
             start=2,
@@ -1191,11 +1246,11 @@ if edited is not None and not edited.empty:
                     ),
                 )
 
-                # Make URL columns clickable in Excel
                 header_name = headers[
                     col_index - 1
                 ]
 
+                # Make URL columns clickable
                 if header_name in [
                     "Application Link",
                     "QR Codes",
@@ -1212,7 +1267,10 @@ if edited is not None and not edited.empty:
                         cell.hyperlink = url
                         cell.style = "Hyperlink"
 
+        # ----------------------------------------------------
         # Column widths
+        # ----------------------------------------------------
+
         for col_index, header in enumerate(
             headers,
             start=1,
@@ -1222,30 +1280,52 @@ if edited is not None and not edited.empty:
                 str(header)
             )
 
-            for cell in ws.iter_rows(
+            for row_cells in ws.iter_rows(
                 min_col=col_index,
                 max_col=col_index,
             ):
 
-                for item in cell:
+                for item in row_cells:
 
                     if item.value:
 
                         max_length = max(
                             max_length,
-                            len(str(item.value))
+                            len(str(item.value)),
                         )
 
+            # Convert column number to Excel letters
+            def excel_column_name(number):
+                result = ""
+
+                while number:
+                    number, remainder = divmod(
+                        number - 1,
+                        26,
+                    )
+
+                    result = (
+                        chr(65 + remainder)
+                        + result
+                    )
+
+                return result
+
+            column_letter = excel_column_name(
+                col_index
+            )
+
             ws.column_dimensions[
-                chr(64 + col_index)
-                if col_index <= 26
-                else "A"
+                column_letter
             ].width = min(
                 max(max_length + 2, 15),
                 45,
             )
 
+        # ----------------------------------------------------
         # Save Excel
+        # ----------------------------------------------------
+
         buf = BytesIO()
 
         wb.save(buf)
@@ -1261,7 +1341,7 @@ if edited is not None and not edited.empty:
                 "vnd.openxmlformats-officedocument."
                 "spreadsheetml.sheet"
             ),
-            width="stretch",
+            width=1000,
         )
 
     else:
@@ -1351,7 +1431,6 @@ st.markdown(
     '<div class="section-title">📧 Email Alerts</div>',
     unsafe_allow_html=True,
 )
-
 
 st.markdown(
     """
